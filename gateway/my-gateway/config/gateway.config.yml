@@ -1,0 +1,61 @@
+http:
+  port: 8080
+admin:
+  port: 9876
+  host: localhost
+apiEndpoints:
+  api:
+    host: localhost
+    paths: "/ip"
+  auth:
+    host: localhost
+    paths:
+      - "/auth/register"
+      - "/auth/login"
+  profile:
+    host: localhost
+    paths:
+      - "/profile/:id"
+serviceEndpoints:
+  httpbin:
+    url: "https://httpbin.org"
+  urlAuth:
+    url: "http://localhost:3001"
+  profile_service:
+    url: "http://localhost:3002"
+policies:
+  - basic-auth
+  - cors
+  - expression
+  - key-auth
+  - log
+  - oauth2
+  - proxy
+  - rate-limit
+pipelines:
+  auth:
+    apiEndpoints:
+      - auth
+    policies:
+      - proxy:
+          action:
+            serviceEndpoint: urlAuth
+  profile:
+    apiEndpoints:
+      - profile
+    policies:
+      - proxy:
+          action:
+            serviceEndpoint: profile_service
+          headers:
+            Authorization: "Bearer ${req.headers.authorization}"
+  default:
+    apiEndpoints:
+      - api
+    policies:
+      # Uncomment `key-auth:` when instructed to in the Getting Started guide.
+      # - key-auth:
+      - proxy:
+          - action:
+              serviceEndpoint: httpbin
+              changeOrigin: true
